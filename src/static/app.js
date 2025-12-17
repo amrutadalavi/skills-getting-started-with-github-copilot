@@ -27,8 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
           <div class="participants-section">
             <strong>Participants:</strong>
-            <ul>
-              ${details.participants.length > 0 ? details.participants.map(p => `<li>${p}</li>`).join('') : '<li>No participants yet</li>'}
+            <ul style="list-style-type: none; padding: 0;">
+              ${details.participants.length > 0 ? details.participants.map(p => `<li>${p} <button class='delete-btn' data-activity='${name}' data-participant='${p}'>🗑️</button></li>`).join('') : '<li>No participants yet</li>'}
             </ul>
           </div>
         `;
@@ -48,6 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Handle form submission
+
+// Add event listener for delete buttons
+activitiesList.addEventListener('click', async (event) => {
+  if (event.target.classList.contains('delete-btn')) {
+    const activity = event.target.getAttribute('data-activity');
+    const participant = event.target.getAttribute('data-participant');
+
+    const response = await fetch(`/activities/${encodeURIComponent(activity)}/unregister?participant=${encodeURIComponent(participant)}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      // Refresh activities list after deletion
+      fetchActivities();
+    } else {
+      console.error('Failed to unregister participant');
+    }
+  }
+});
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -68,6 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities list after registration
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
